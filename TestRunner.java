@@ -14,6 +14,7 @@ public class TestRunner {
         testBoundaryEmptyStack();
         testExceptionHandling();
         testProducerCopy();
+        testCapacityOne();
 
         System.out.println("\n==============================================");
         System.out.println("                 TEST SUMMARY                 ");
@@ -25,7 +26,7 @@ public class TestRunner {
     }
 
     // ============================================================
-    // Helper Methods สำหรับตรวจเช็กผลลัพธ์
+    // Helper Methods สำหรับตรวจเช็กผลลัพธ์ (ไม่ต้องพึ่ง JUnit)
     // ============================================================
     private static void assertEquals(Object expected, Object actual, String testName) {
         if ((expected == null && actual == null) || (expected != null && expected.equals(actual))) {
@@ -48,54 +49,131 @@ public class TestRunner {
     }
 
     // ============================================================
-    // Test Cases (6 กลุ่มหลักสำหรับซ้อมเขียน)
+    // Test Cases
     // ============================================================
 
     // 1. ทดสอบ Creator และสถานะเริ่มต้น
     private static void testCreatorAndInitialState() {
         System.out.println("--- Test Group 1: Creator & Initial State ---");
-        // TODO: เขียนเช็ก size == 0, capacity, isEmpty, !isFull
+        BoundedStack<String> stack = new BoundedStack<>(3);
         
+        assertEquals(0, stack.size(), "Initial size should be 0");
+        assertEquals(3, stack.capacity(), "Capacity should be 3");
+        assertTrue(stack.isEmpty(), "New stack should be empty");
+        assertTrue(!stack.isFull(), "New stack should not be full");
         System.out.println();
     }
 
     // 2. ทดสอบการ Push และ Pop แบบปกติ
     private static void testPushAndPopNormal() {
         System.out.println("--- Test Group 2: Normal Push & Pop ---");
-        // TODO: เขียน push 2 ตัว แล้วลอง peek และ pop ออกดูค่า LIFO
+        BoundedStack<Integer> stack = new BoundedStack<>(5);
         
+        stack.push(10);
+        stack.push(20);
+        
+        assertEquals(2, stack.size(), "Size should be 2 after pushing twice");
+        assertEquals(20, stack.peek(), "Peek should return last pushed element (20)");
+        assertEquals(20, stack.pop(), "Pop should return last pushed element (20)");
+        assertEquals(10, stack.pop(), "Pop should return remaining element (10)");
+        assertTrue(stack.isEmpty(), "Stack should be empty after popping all items");
         System.out.println();
     }
 
     // 3. ทดสอบ Boundary Case: เมื่อ Stack เต็มความจุ
     private static void testBoundaryFullStack() {
         System.out.println("--- Test Group 3: Boundary Case (Full Stack) ---");
-        // TODO: เขียน push ให้เต็ม เช็ก isFull แล้วใช้ try-catch ดักจับ IllegalStateException
+        BoundedStack<String> stack = new BoundedStack<>(2);
         
+        stack.push("A");
+        stack.push("B");
+
+        assertTrue(stack.isFull(), "Stack should be full when items count equals capacity");
+        
+        // ทดสอบว่าถ้าเต็มแล้วสั่ง push จะโยน IllegalStateException
+        try {
+            stack.push("C");
+            assertEquals("Exception Thrown", "No Exception", "Should throw IllegalStateException when pushing to full stack");
+        } catch (IllegalStateException e) {
+            assertTrue(true, "Correctly caught Exception when pushing to full stack");
+        }
         System.out.println();
     }
 
     // 4. ทดสอบ Boundary Case: เมื่อ Stack ว่างเปล่า
     private static void testBoundaryEmptyStack() {
         System.out.println("--- Test Group 4: Boundary Case (Empty Stack) ---");
-        // TODO: ใช้ try-catch ดักจับ IllegalStateException เมื่อ pop() หรือ peek() ตอนสแตกรอบว่าง
-        
+        BoundedStack<String> stack = new BoundedStack<>(3);
+
+        // ทดสอบว่าถ้าว่างแล้วสั่ง pop จะโยน IllegalStateException
+        try {
+            stack.pop();
+            assertEquals("Exception Thrown", "No Exception", "Should throw IllegalStateException when popping empty stack");
+        } catch (IllegalStateException e) {
+            assertTrue(true, "Correctly caught Exception when popping empty stack");
+        }
+
+        // ทดสอบว่าถ้าว่างแล้วสั่ง peek จะโยน IllegalStateException
+        try {
+            stack.peek();
+            assertEquals("Exception Thrown", "No Exception", "Should throw IllegalStateException when peeking empty stack");
+        } catch (IllegalStateException e) {
+            assertTrue(true, "Correctly caught Exception when peeking empty stack");
+        }
         System.out.println();
     }
 
-    // 5. ทดสอบการดักจับ Exception กรณี Defensive Programming
+    // 5. ทดสอบการดักจับ Exception ในกรณีอื่นๆ (Defensive Programming)
     private static void testExceptionHandling() {
         System.out.println("--- Test Group 5: Exception Handling ---");
-        // TODO: ใช้ try-catch ดักจับ IllegalArgumentException ตอนสร้าง capacity <= 0 หรือ push(null)
         
+        // เคสที่ 1: ตั้งค่า capacity <= 0
+        try {
+            new BoundedStack<String>(0);
+            assertEquals("Exception Thrown", "No Exception", "Should throw IllegalArgumentException for capacity 0");
+        } catch (IllegalArgumentException e) {
+            assertTrue(true, "Correctly caught Exception for non-positive capacity");
+        }
+
+        // เคสที่ 2: ลอง push ค่า null
+        BoundedStack<String> stack = new BoundedStack<>(3);
+        try {
+            stack.push(null);
+            assertEquals("Exception Thrown", "No Exception", "Should throw IllegalArgumentException when pushing null");
+        } catch (IllegalArgumentException e) {
+            assertTrue(true, "Correctly caught Exception when pushing null");
+        }
         System.out.println();
     }
 
-    // 6. ทดสอบ Producer (copy) การแยก Object (Aliasing)
+    // 6. ทดสอบ Producer (copy) ว่าแยก Object จากกันจริงไหม
     private static void testProducerCopy() {
         System.out.println("--- Test Group 6: Producer (copy) ---");
-        // TODO: สั่ง copy() แล้วลองแก้ตัวก๊อปปี้ เช็กว่าตัว original ไม่เปลี่ยนตาม
-        
+        BoundedStack<String> original = new BoundedStack<>(3);
+        original.push("X");
+        original.push("Y");
+
+        BoundedStack<String> cloned = original.copy();
+
+        // ตรวจสอบว่าข้อมูลเริ่มต้นเหมือนกัน
+        assertEquals(original.size(), cloned.size(), "Cloned stack should have same size");
+        assertEquals(original.peek(), cloned.peek(), "Cloned stack should have same top element");
+
+        // แก้ไข cloned แล้วตรวจสอบว่า original ไม่ถูกเปลี่ยนตาม (Aliasing Test)
+        cloned.pop();
+        assertEquals(2, original.size(), "Original size should remain 2 after popping from clone");
+        assertEquals(1, cloned.size(), "Cloned size should decrease to 1");
         System.out.println();
     }
+    // 7. ทดสอบกรณีขอบเขตพิเศษ: ความจุ = 1
+    private static void testCapacityOne() {
+    System.out.println("--- Test Group 7: Capacity = 1 (edge case) ---");
+    BoundedStack<String> stack = new BoundedStack<>(1);
+    
+    assertTrue(stack.isEmpty(), "New stack with capacity 1 should be empty");
+    stack.push("A");
+    assertTrue(stack.isFull(), "Stack should be full after pushing 1 item into capacity 1 stack");
+    assertEquals("A", stack.pop(), "Popped item should be 'A'");
+    assertTrue(stack.isEmpty(), "Stack should be empty after popping the only item");
+}
 }
