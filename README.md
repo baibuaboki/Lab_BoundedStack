@@ -74,8 +74,6 @@
 
 ## 🚀 How to Run Tests
 
-โปรเจกต์นี้ใช้ระบบ Test ที่เขียนขึ้นเองโดย **ห้ามใช้ JUnit Framework**
-
 1. **คอมไพล์ไฟล์ทั้งหมด:**
    ```bash
    javac BoundedStack.java TestRunner.java
