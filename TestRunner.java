@@ -15,7 +15,8 @@ public class TestRunner {
         testExceptionHandling();
         testProducerCopy();
         testCapacityOne();
-
+        testPeekAliasingBehavior();
+        testNearFullBoundary();
         System.out.println("\n==============================================");
         System.out.println("                 TEST SUMMARY                 ");
         System.out.println("==============================================");
@@ -96,6 +97,7 @@ public class TestRunner {
             assertEquals("Exception Thrown", "No Exception", "Should throw IllegalStateException when pushing to full stack");
         } catch (IllegalStateException e) {
             assertTrue(true, "Correctly caught Exception when pushing to full stack");
+            assertEquals(2, stack.size(), "Size should remain 2 when trying to push to full stack");
         }
         System.out.println();
     }
@@ -111,6 +113,7 @@ public class TestRunner {
             assertEquals("Exception Thrown", "No Exception", "Should throw IllegalStateException when popping empty stack");
         } catch (IllegalStateException e) {
             assertTrue(true, "Correctly caught Exception when popping empty stack");
+            assertEquals(0, stack.size(), "Size should remain 0 when trying to pop from empty stack");
         }
 
         // ทดสอบว่าถ้าว่างแล้วสั่ง peek จะโยน IllegalStateException
@@ -134,8 +137,15 @@ public class TestRunner {
         } catch (IllegalArgumentException e) {
             assertTrue(true, "Correctly caught Exception for non-positive capacity");
         }
+        // เคสที่ 2: ตั้งค่า capacity ติดลบ 
+        try {
+            new BoundedStack<String>(-5);
+            assertEquals("Exception Thrown", "No Exception", "Should throw IllegalArgumentException for negative capacity");
+        } catch (IllegalArgumentException e) {
+            assertTrue(true, "Correctly caught Exception for negative capacity");
+        }
 
-        // เคสที่ 2: ลอง push ค่า null
+        // เคสที่ 3: ลอง push ค่า null
         BoundedStack<String> stack = new BoundedStack<>(3);
         try {
             stack.push(null);
@@ -143,6 +153,11 @@ public class TestRunner {
         } catch (IllegalArgumentException e) {
             assertTrue(true, "Correctly caught Exception when pushing null");
         }
+
+        // เคสที่ 4 — capacity มหาศาล (ไม่ควร throw) 
+        BoundedStack<String> hugeStack = new BoundedStack<>(Integer.MAX_VALUE);   
+        assertTrue(hugeStack.isEmpty(), "Huge stack should be empty");                                    
+        assertTrue(!hugeStack.isFull(), "Huge stack should not be full");                                    
         System.out.println();
     }
 
@@ -175,5 +190,36 @@ public class TestRunner {
     assertTrue(stack.isFull(), "Stack should be full after pushing 1 item into capacity 1 stack");
     assertEquals("A", stack.pop(), "Popped item should be 'A'");
     assertTrue(stack.isEmpty(), "Stack should be empty after popping the only item");
+}
+    // 8. ทดสอบ peek() aliasing (ข้อจำกัดที่รู้อยู่ — พิสูจน์ด้วย test แทนคำอธิบายใน README)
+private static void testPeekAliasingBehavior() {                     
+    System.out.println("--- Test Group 8: peek() Aliasing (Known Limitation) ---");
+
+    BoundedStack<int[]> stack = new BoundedStack<>(1);        
+
+    int[] original = new int[]{42};                            
+    stack.push(original);
+
+    int[] fromPeek = stack.peek();
+    fromPeek[0] = 99;                                       
+    int[] peekAgain = stack.peek();
+
+    assertEquals(99, peekAgain[0], "Peek should reflect changes to the returned array");                  
+    System.out.println();                                          
+}
+    // 9. ทดสอบ Boundary Case: เกือบเต็ม (capacity - 1) — partition ที่ขาดหายไปจากกลุ่มเดิม
+private static void testNearFullBoundary() {                      
+    System.out.println("--- Test Group 9: Near-Full Boundary ---");
+
+    BoundedStack<String> stack = new BoundedStack<>(3);       
+
+    stack.push("A");                                            
+    stack.push("B");                                            
+
+    assertTrue(!stack.isFull(), "Stack should not be full when size is less than capacity");                                   
+    assertTrue(!stack.isEmpty(), "Stack should not be empty when size is greater than 0");                                   
+    assertEquals(2, stack.size(), "Stack should have 2 items when size is less than capacity");                    
+
+    System.out.println();
 }
 }
